@@ -54,7 +54,19 @@ async function main() {
     await c.query(`ALTER ROLE tera_readonly PASSWORD '${sandi}'`);
 
     const u = new URL(env.url);
-    u.username = "tera_readonly";
+
+    /*
+     * Pooler Supabase (Supavisor) merutekan berdasarkan NAMA PENGGUNA:
+     * bentuknya `<role>.<project-ref>`, dan tanpa akhiran itu ia
+     * menolak dengan "no tenant identifier provided". Akhirannya
+     * diambil dari pengguna yang sedang dipakai, bukan ditebak.
+     *
+     * Untuk PostgreSQL biasa tidak ada titik di nama penggunanya, dan
+     * cabang ini terlewati begitu saja.
+     */
+    const titik = u.username.indexOf(".");
+    const tenant = titik === -1 ? "" : u.username.slice(titik);
+    u.username = "tera_readonly" + tenant;
     u.password = sandi;
 
     console.log("\n✓ Kata sandi tera_readonly diganti pada " + host + ".\n");
