@@ -9,3 +9,4 @@ next-env.d.ts
 # tidak ikut ke repositori: isinya versi lama dari kode yang sekarang
 # sudah ada di sini, dan hanya akan membingungkan yang membacanya.
 .files-original.zip
+.vercel
