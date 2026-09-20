@@ -1,0 +1,229 @@
+@import "tailwindcss";
+
+/*
+ * ============================================================
+ * TEMA
+ * ============================================================
+ * Semua warna berasal dari variable di berkas ini. Komponen tidak pernah
+ * menulis nilai warna sendiri dan tidak pernah memakai varian `dark:` —
+ * tema berganti sepenuhnya dengan menukar nilai variable.
+ *
+ * @theme hanya menunjuk ke variable, bukan memuat nilainya, supaya nilai
+ * bisa ditimpa saat runtime lewat atribut data-theme di <html>.
+ */
+@theme {
+  --color-paper: var(--c-paper);
+  --color-surface: var(--c-surface);
+  --color-raised: var(--c-raised);
+  --color-line: var(--c-line);
+  --color-ink: var(--c-ink);
+  --color-muted: var(--c-muted);
+  --color-action: var(--c-action);
+  --color-on-action: var(--c-on-action);
+  --color-positive: var(--c-positive);
+  --color-warning: var(--c-warning);
+  --color-danger: var(--c-danger);
+
+  --font-sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Menlo, monospace;
+}
+
+/* Terang — juga dipakai saat pengguna memilih terang secara eksplisit. */
+:root {
+  color-scheme: light;
+
+  --c-paper: oklch(0.985 0.002 250);
+  --c-surface: oklch(1 0 0);
+  --c-raised: oklch(0.968 0.003 250);
+  --c-line: oklch(0.915 0.004 250);
+  --c-ink: oklch(0.23 0.012 260);
+  --c-muted: oklch(0.55 0.014 260);
+  --c-action: oklch(0.52 0.16 258);
+  --c-on-action: oklch(1 0 0);
+  --c-positive: oklch(0.55 0.13 155);
+  --c-warning: oklch(0.62 0.14 75);
+  --c-danger: oklch(0.55 0.19 25);
+}
+
+/*
+ * Gelap mengikuti sistem selama pengguna belum memilih sendiri. Nilainya
+ * sengaja ditulis dua kali: sekali untuk preferensi sistem, sekali untuk
+ * pilihan eksplisit. CSS tidak punya cara membagikan satu blok deklarasi
+ * ke dua selektor tanpa preprosesor.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --c-paper: oklch(0.17 0.008 260);
+    --c-surface: oklch(0.21 0.009 260);
+    --c-raised: oklch(0.245 0.01 260);
+    --c-line: oklch(0.29 0.011 260);
+    --c-ink: oklch(0.94 0.004 260);
+    --c-muted: oklch(0.68 0.012 260);
+    --c-action: oklch(0.72 0.13 255);
+    --c-on-action: oklch(0.17 0.008 260);
+    --c-positive: oklch(0.72 0.12 155);
+    --c-warning: oklch(0.76 0.13 78);
+    --c-danger: oklch(0.68 0.16 25);
+  }
+}
+
+/* Pilihan eksplisit. Ditaruh setelah media query supaya menang saat seri. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --c-paper: oklch(0.17 0.008 260);
+  --c-surface: oklch(0.21 0.009 260);
+  --c-raised: oklch(0.245 0.01 260);
+  --c-line: oklch(0.29 0.011 260);
+  --c-ink: oklch(0.94 0.004 260);
+  --c-muted: oklch(0.68 0.012 260);
+  --c-action: oklch(0.72 0.13 255);
+  --c-on-action: oklch(0.17 0.008 260);
+  --c-positive: oklch(0.72 0.12 155);
+  --c-warning: oklch(0.76 0.13 78);
+  --c-danger: oklch(0.68 0.16 25);
+}
+
+@layer base {
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Fokus keyboard harus selalu terlihat, termasuk di atas latar gelap. */
+  :focus-visible {
+    outline: 2px solid var(--color-action);
+    outline-offset: 2px;
+  }
+
+  th {
+    font-weight: 600;
+  }
+
+  /* Angka uang dan kuantitas harus rata kolom, jadi lebarnya dikunci. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: 0.5rem;
+  }
+
+  .th {
+    padding: 0.625rem 1rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    border-bottom: 1px solid var(--color-line);
+    white-space: nowrap;
+  }
+
+  .td {
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    vertical-align: top;
+  }
+
+  /*
+   * Sel angka dalam bentuk kelas, untuk tabel yang dirender dari data
+   * (hasil alat chat). Komponen <Num> menghasilkan tampilan yang sama;
+   * kelas ini dipakai di tempat yang tidak melewati komponen itu.
+   */
+  .td-num {
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    vertical-align: top;
+    text-align: right;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  tbody tr + tr .td-num {
+    border-top: 1px solid var(--color-line);
+  }
+
+  tbody tr + tr .td {
+    border-top: 1px solid var(--color-line);
+  }
+
+  .field {
+    display: block;
+    width: 100%;
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    border: 1px solid var(--color-line);
+    border-radius: 0.375rem;
+    padding: 0.4rem 0.625rem;
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+
+  .field:focus-visible {
+    outline: 2px solid var(--color-action);
+    outline-offset: -1px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    background-color: var(--color-action);
+    color: var(--color-on-action);
+    border-radius: 0.375rem;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: filter 120ms ease;
+  }
+
+  .btn:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background-color: transparent;
+    border: 1px solid var(--color-line);
+    border-radius: 0.375rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8125rem;
+    color: var(--color-ink);
+    cursor: pointer;
+    transition: background-color 120ms ease;
+  }
+
+  .btn-ghost:hover {
+    background-color: var(--color-raised);
+  }
+}
+
+/* Animasi hanya hiasan; hormati pengguna yang mematikannya. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.pgdata/
+.env.local
+next-env.d.ts
+*.tsbuildinfo
+
+# Arsip berkas awal proyek. Berkasnya dibiarkan ada di komputer, tapi
+# tidak ikut ke repositori: isinya versi lama dari kode yang sekarang
+# sudah ada di sini, dan hanya akan membingungkan yang membacanya.
+.files-original.zip
