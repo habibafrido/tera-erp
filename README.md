@@ -414,29 +414,64 @@ terkelola.
 Buat proyek Postgres (panduan ini memakai Supabase, region Singapura).
 Dua hal yang perlu diperhatikan:
 
-**Pakai connection string POOLER, bukan yang langsung.** Vercel
-menjalankan tiap permintaan di instance terpisah, dan masing-masing
-membuka pool sendiri. Tanpa pooler, batas koneksi database habis jauh
-sebelum lalu lintasnya ramai. Di Supabase: *Connection string →
-Transaction pooler*, port **6543**.
+**Jangan pakai connection string "Direct".** Host `db.<ref>.supabase.co`
+hanya punya record AAAA — IPv6 saja. Dari jaringan rumah atau kantor yang
+IPv4-only, ia tidak bisa dihubungi sama sekali (`ENOTFOUND`), dan add-on
+IPv4 milik Supabase berbayar. Tidak perlu dibeli: kedua pooler melayani
+IPv4.
 
-**Setel zona waktunya.** Seluruh tanggal di aplikasi ini berasal dari
-`CURRENT_DATE` milik database, bukan dari jam server — itu disengaja dan
-diuji oleh `npm run audit:tanggal`. Database terkelola biasanya UTC,
-yang berarti "hari ini" berganti pukul 07.00 WIB. Untuk usaha di
-Indonesia itu salah selama tujuh jam setiap hari:
+| Keperluan | Endpoint | Port |
+|---|---|---|
+| Migrasi dan seed | Session pooler | 5432 |
+| Aplikasi di Vercel | Transaction pooler | 6543 |
+
+Username-nya **berbeda** dari yang Direct: `postgres.<project-ref>`, bukan
+`postgres`.
+
+**Sertifikat TLS.** Supabase memakai CA sendiri (Supabase Root 2021 CA)
+yang tidak ada di daftar tepercaya Node, sehingga `sslmode=require` —
+yang di `pg` 8.x berarti verifikasi penuh — gagal dengan
+`SELF_SIGNED_CERT_IN_CHAIN`. Root CA-nya disertakan di repositori ini
+(`certs/supabase-root-2021.crt`, sertifikat publik), jadi verifikasi
+penuh tetap bisa dipakai alih-alih dimatikan:
+
+```
+?sslmode=verify-full&sslrootcert=certs/supabase-root-2021.crt
+```
+
+`next.config.ts` memaksa berkas itu ikut ke bundel serverless lewat
+`outputFileTracingIncludes` — Next tidak bisa menebaknya sendiri karena
+namanya hanya muncul di dalam sebuah connection string, bukan di `import`
+mana pun.
+
+**Zona waktu.** Seluruh tanggal di aplikasi berasal dari `CURRENT_DATE`
+milik database, bukan dari jam server — itu disengaja dan diuji
+`npm run audit:tanggal`. Supabase memakai UTC, yang berarti "hari ini"
+berganti pukul 07.00 WIB: setiap dokumen yang dibuat antara tengah malam
+dan jam tujuh pagi akan bertanggal kemarin.
 
 ```sql
 ALTER DATABASE postgres SET timezone = 'Asia/Jakarta';
 ```
+
+Setelan ini hanya berlaku pada koneksi backend yang BARU. Pooler menyimpan
+backend lama, jadi setelah menjalankannya periksa dulu — bukan anggap
+beres:
+
+```sql
+SELECT current_setting('TimeZone'), CURRENT_DATE;
+```
+
+Kalau masih UTC, tunggu backend lamanya didaur, atau paksa dengan
+`SET TIME ZONE 'Asia/Jakarta'` di sesi itu.
 
 ### 2. Skema dan data awal
 
 Dijalankan dari komputer Anda, menunjuk ke database terkelola:
 
 ```bash
-# PowerShell
-$env:DATABASE_URL='postgresql://...:5432/postgres'   # koneksi LANGSUNG, bukan pooler
+# PowerShell — pakai SESSION pooler (5432)
+$env:DATABASE_URL='postgresql://postgres.<ref>:<sandi>@aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=verify-full&sslrootcert=certs/supabase-root-2021.crt'
 $env:PG_EMBEDDED='0'
 npm run db:migrate
 
@@ -446,8 +481,11 @@ npm run db:seed
 npm run db:amankan    # mengacak sandi role baca-saja, mencetak URL-nya
 ```
 
-Migrasi memakai koneksi **langsung** (port 5432), bukan pooler: pooler
-mode transaksi tidak mendukung beberapa perintah DDL.
+Migrasi memakai **session pooler** (5432), bukan transaction pooler
+(6543): mode transaksi tidak cocok untuk sebagian perintah DDL.
+
+Kalau kata sandi database Anda memuat karakter khusus, persen-encode di
+dalam URL — `*` menjadi `%2A`, `@` menjadi `%40`, dan seterusnya.
 
 `db:seed` akan **menolak** berjalan kalau `TERA_SEED_PASSWORD` tidak
 disetel dan databasenya bukan localhost. Kata sandi bawaannya tertulis
@@ -458,8 +496,8 @@ internet sama dengan tidak memasang kata sandi sama sekali.
 
 | Variabel | Isi |
 |---|---|
-| `DATABASE_URL` | connection string **pooler** (port 6543) |
-| `READONLY_DATABASE_URL` | keluaran `npm run db:amankan`, port pooler juga |
+| `DATABASE_URL` | **transaction pooler**, port 6543, dengan `sslmode=verify-full&sslrootcert=certs/supabase-root-2021.crt` |
+| `READONLY_DATABASE_URL` | keluaran `npm run db:amankan`, port 6543 juga |
 | `OPENROUTER_API_KEY` | kunci OpenRouter |
 | `OPENROUTER_MODEL` | mis. `deepseek/deepseek-v4-flash-0731` |
 | `OPENROUTER_FALLBACK_MODELS` | opsional |
