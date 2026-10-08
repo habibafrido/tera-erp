@@ -149,9 +149,15 @@ export async function applyMigrations(
  */
 const USERS: [string, string, string][] = [
   // email, nama, peran
-  ["gudang@tera.local", "Rina Operator Gudang", "operator_gudang"],
-  ["keuangan@tera.local", "Bagas Staf Keuangan", "staf_keuangan"],
-  ["pengawas@tera.local", "Sari Pengawas", "pengawas"],
+  //
+  // Namanya sengaja label peran, bukan nama orang. Data contoh ikut
+  // terbawa ke pemasangan sungguhan, dan nama orang yang tidak pernah
+  // ada di sana hanya menimbulkan pertanyaan "ini siapa" pada jejak
+  // audit — tepat di tempat yang seluruh gunanya adalah kejelasan
+  // siapa. Ganti ke nama sebenarnya lewat halaman kelola pengguna.
+  ["gudang@tera.local", "Operator Gudang", "operator_gudang"],
+  ["keuangan@tera.local", "Staf Keuangan", "staf_keuangan"],
+  ["pengawas@tera.local", "Pengawas", "pengawas"],
 ];
 
 const SANDI_BAWAAN = "tera12345";
